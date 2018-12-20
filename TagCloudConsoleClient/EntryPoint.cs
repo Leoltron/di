@@ -1,7 +1,9 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 using System.Linq;
 using Autofac;
 using CommandLine;
+using ResultOf;
 using TagsCloudContainer;
 using TagsCloudVisualization;
 
@@ -20,9 +22,12 @@ namespace TagCloudConsoleClient
             var bgColor = Color.FromName(config.BackgroundColor);
 
             var container = BuildContainer();
-            var wordLayouts = container.Resolve<TagCloudBuilder>()
-                .Build(config.InputFilePath, wordColor, bgColor, config.TextSize);
-            container.Resolve<TagCloudSaver>().Save(bgColor, wordLayouts.ToList(), config.OutputFilePath);
+            var tagCloudSaver = container.Resolve<TagCloudSaver>();
+
+            container.Resolve<TagCloudBuilder>()
+                .Build(config.InputFilePath, wordColor, bgColor, config.TextSize)
+                .Then(wordLayouts => tagCloudSaver.Save(bgColor, wordLayouts.ToList(), config.OutputFilePath))
+                .OnFail(errorString => Console.Error.WriteLine(errorString));
         }
 
         private static IContainer BuildContainer()

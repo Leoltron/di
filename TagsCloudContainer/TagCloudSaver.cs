@@ -1,8 +1,8 @@
-using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using ResultOf;
 
 namespace TagsCloudContainer
 {
@@ -17,26 +17,26 @@ namespace TagsCloudContainer
                 .ToDictionary();
         }
 
-        public void Save(Color bgColor, List<WordLayout> wordLayouts, string path)
+        public Result<None> Save(Color bgColor, List<WordLayout> wordLayouts, string path)
         {
-            var saver = FindBitmapSaver(Path.GetExtension(path));
             var bitmap = TagCloudDrawer.DrawTagCloud(wordLayouts, bgColor);
-            saver.Save(bitmap, path);
+
+            return FindBitmapSaver(Path.GetExtension(path)).Then(saver => saver.Save(bitmap, path));
         }
 
-        private IBitmapSaver FindBitmapSaver(string extension)
+        private Result<IBitmapSaver> FindBitmapSaver(string extension)
         {
             if (extension == null)
             {
-                throw new ArgumentNullException(nameof(extension));
+                return Result.Fail<IBitmapSaver>(nameof(extension) + " is null");
             }
 
             if (!saversByExtension.TryGetValue(extension, out var findBitmapSaver))
             {
-                throw new ArgumentException($"Unsupported extension: \"{extension}\"");
+                return Result.Fail<IBitmapSaver>($"Unsupported extension: \"{extension}\"");
             }
 
-            return findBitmapSaver;
+            return Result.Ok(findBitmapSaver);
         }
     }
 }

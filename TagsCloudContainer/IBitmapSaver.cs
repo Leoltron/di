@@ -1,10 +1,11 @@
 using System.Drawing;
+using ResultOf;
 
 namespace TagsCloudContainer
 {
     public interface IBitmapSaver
     {
-        void Save(Bitmap bitmap, string filename);
+        Result<None> Save(Bitmap bitmap, string filename);
 
         string[] SupportedExtensions { get; }
     }

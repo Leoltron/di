@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
@@ -56,7 +55,7 @@ namespace TagsCloudContainer
                 case FilterType.WhiteList:
                     return contains;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    return false;
             }
         }
     }

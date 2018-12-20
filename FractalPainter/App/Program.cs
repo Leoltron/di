@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Windows.Forms;
-using FractalPainting.App.Actions;
 using FractalPainting.Infrastructure.Common;
 using FractalPainting.Infrastructure.UiActions;
 using Ninject;
