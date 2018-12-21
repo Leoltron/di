@@ -19,9 +19,10 @@ namespace TagsCloudContainer
 
         public Result<None> Save(Color bgColor, List<WordLayout> wordLayouts, string path)
         {
-            var bitmap = TagCloudDrawer.DrawTagCloud(wordLayouts, bgColor);
-
-            return FindBitmapSaver(Path.GetExtension(path)).Then(saver => saver.Save(bitmap, path));
+            using (var bitmap = TagCloudDrawer.DrawTagCloud(wordLayouts, bgColor))
+                return FindBitmapSaver(Path.GetExtension(path))
+                    // ReSharper disable once AccessToDisposedClosure
+                    .Then(saver => saver.Save(bitmap, path));
         }
 
         private Result<IBitmapSaver> FindBitmapSaver(string extension)
