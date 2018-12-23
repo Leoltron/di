@@ -1,9 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using ResultOf;
 
 namespace TagsCloudContainer
 {
@@ -23,12 +23,22 @@ namespace TagsCloudContainer
             [".wmf"] = ImageFormat.Wmf
         };
 
-        public void Save(Bitmap bitmap, string filename)
+        public Result<None> Save(Bitmap bitmap, string filename)
         {
-            var extension = Path.GetExtension(filename) ?? throw new ArgumentException("No extension found.");
+            var extension = Path.GetExtension(filename);
+            if (extension == null)
+            {
+                return Result.Fail<None>("No extension found.");
+            }
+
             if (!formats.TryGetValue(extension.ToLowerInvariant(), out var imageFormat))
-                throw new ArgumentException("Unsupported extension: " + extension);
+            {
+                return Result.Fail<None>("Unsupported extension: " + extension);
+            }
+
             bitmap.Save(filename, imageFormat);
+
+            return Result.Ok();
         }
 
         public string[] SupportedExtensions => formats.Select(p => p.Key).ToArray();

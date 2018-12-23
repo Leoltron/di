@@ -1,8 +1,8 @@
-using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using ResultOf;
 using TagsCloudVisualization;
 
 namespace TagsCloudContainer
@@ -32,15 +32,20 @@ namespace TagsCloudContainer
                 .ToDictionary();
         }
 
-        public IEnumerable<WordLayout> Build(string filePath, Color wordColor, Color bgColor, float fontSize)
+        public Result<IEnumerable<WordLayout>> Build(string filePath, Color wordColor, Color bgColor, float fontSize)
         {
             wordColorPicker.SetBackgroundColor(bgColor);
             wordColorPicker.SetBaseWordColor(wordColor);
             wordFontPicker.SetBaseSize(fontSize);
-            
-            var words = GetWords(filePath);
-            var filteredWords = wordPreprocessor.PreprocessWords(words);
-            var wordCount = CountWords(filteredWords);
+
+            return GetWords(filePath)
+                .Then(words => wordPreprocessor.PreprocessWords(words))
+                .Then(CountWords)
+                .Then(Build);
+        }
+
+        private IEnumerable<WordLayout> Build(List<(string word, int count)> wordCount)
+        {
             var wordColors = wordColorPicker.PickColors(wordCount);
             var wordFonts = wordFontPicker.PickFonts(wordCount);
 
@@ -69,23 +74,27 @@ namespace TagsCloudContainer
             return wordCount.Select(pair => (pair.Key, pair.Value)).ToList();
         }
 
-        private string[] GetWords(string filePath)
+        private Result<string[]> GetWords(string filePath)
         {
             var extension = Path.GetExtension(filePath);
             if (extension == null)
             {
-                throw new ArgumentNullException(nameof(extension));
+                return Result.Fail<string[]>("Extension is null");
             }
 
             if (!wordProviderByExtension.TryGetValue(extension, out var wordsProvider))
             {
-                throw new ArgumentException($"Unsupported extension: \"{extension}\"");
+                return Result.Fail<string[]>("Unsupported extension: \"{extension}\"");
             }
 
-            using (var stream = File.OpenRead(filePath))
-            {
-                return wordsProvider.GetWords(stream);
-            }
+            return Result.Of(() => File.OpenRead(filePath))
+                .Then(s => (s, wordsProvider.GetWords(s)))
+                .Then(pair =>
+                {
+                    var (stream, words) = pair;
+                    stream.Close();
+                    return words;
+                });
         }
     }
 }
